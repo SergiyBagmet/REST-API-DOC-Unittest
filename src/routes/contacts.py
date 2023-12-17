@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
 from src.repository import contacts as repositories_contacts
-from src.schemas.contacts import ContactSchema, ContactUpdateSchema, ContactResponse
+from src.schemas.contacts import ContactCreateSchema, ContactUpdateSchema, ContactResponseSchema
 
 router = APIRouter(prefix='/contacts', tags=['contacts'])
 

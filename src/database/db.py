@@ -34,5 +34,5 @@ session_manager = DatabaseSessionManager(config.DB_URL)
 
 
 async def get_db():
-    with session_manager.session() as session:
+    async with session_manager.session() as session:
         yield session
