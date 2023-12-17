@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "rest-api-contacts"
+version = "0.1.0"
+description = ""
+authors = ["SergiyBagmet <134723713+SergiyBagmet@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.105.0"
+alembic = "^1.13.0"
+sqlalchemy = "^2.0.23"
+asyncpg = "^0.29.0"
+uvicorn = "^0.24.0.post1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
