@@ -30,11 +30,15 @@ async def create_contact(body: ContactCreateSchema, db: AsyncSession = Depends(g
     return contact
 
 
-@router.put("/{contact_id}")
-async def update_contact():
-    pass
+@router.put("/{contact_id}", response_model=ContactResponseSchema, status_code=status.HTTP_200_OK)
+async def update_contact(body: ContactUpdateSchema, contact_id: int, db: AsyncSession = Depends(get_db)):
+    contact = await repositories_contacts.update_contact(contact_id, body, db)
+    if contact is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+    return contact
 
 
-@router.delete("/{contact_id}")
-async def delete_contact():
-    pass
+@router.delete("/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
+    contact = await repositories_contacts.delete_contact(contact_id, db)
+    return contact
