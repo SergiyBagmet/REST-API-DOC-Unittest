@@ -56,3 +56,17 @@ async def search_contacts(search_text: str,
     if len(contacts) == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
     return contacts
+
+
+@router.get("/birthdays/{days}", response_model=list[ContactResponseSchema])
+async def get_birthdays(days: int,
+                        limit: int = Query(10, ge=10, le=500),
+                        offset: int = Query(0, ge=0),
+                        db: AsyncSession = Depends(get_db)):
+    if days <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Days must be positive")
+    contacts = await repositories_contacts.get_birthdays(days, limit, offset, db)
+    if len(contacts) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+    return contacts

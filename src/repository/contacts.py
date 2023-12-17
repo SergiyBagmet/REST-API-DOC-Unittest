@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -59,16 +61,32 @@ async def search_contacts(search_text: str,
                           limit: int,
                           offset: int,
                           db: AsyncSession):
-
     stmt = select(Contact).filter(
         or_(
             func.lower(Contact.email).ilike(f"%{search_text.lower()}%"),
             or_(
                 func.lower(Contact.first_name).ilike(f"%{search_text.lower()}%"),
                 func.lower(Contact.last_name).ilike(f"%{search_text.lower()}%")
-                )
             )
+        )
     )
+    stmt = stmt.limit(limit).offset(offset)
+    contacts = await db.execute(stmt)
+    return contacts.scalars().all()
+
+
+async def get_birthdays(days: int, limit: int, offset: int, db: AsyncSession):
+
+    today = date.today()
+    end_date = today + timedelta(days=days)
+
+    stmt = select(Contact).filter(
+        func.date_part('month', Contact.birthday) >= today.month,
+        func.date_part('month', Contact.birthday) <= end_date.month,
+        func.date_part('day', Contact.birthday) >= today.day,
+        func.date_part('day', Contact.birthday) <= end_date.day
+    ).order_by(Contact.birthday)
+
     stmt = stmt.limit(limit).offset(offset)
     contacts = await db.execute(stmt)
     return contacts.scalars().all()
