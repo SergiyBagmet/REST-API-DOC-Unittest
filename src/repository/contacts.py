@@ -1,5 +1,7 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.operators import or_
 
 from src.database.models import Contact
 from src.schemas.contacts import ContactCreateSchema, ContactUpdateSchema
@@ -51,3 +53,22 @@ async def delete_contact(contact_id: int, db: AsyncSession):
         await db.commit()
 
     return contact
+
+
+async def search_contacts(search_text: str,
+                          limit: int,
+                          offset: int,
+                          db: AsyncSession):
+
+    stmt = select(Contact).filter(
+        or_(
+            func.lower(Contact.email).ilike(f"%{search_text.lower()}%"),
+            or_(
+                func.lower(Contact.first_name).ilike(f"%{search_text.lower()}%"),
+                func.lower(Contact.last_name).ilike(f"%{search_text.lower()}%")
+                )
+            )
+    )
+    stmt = stmt.limit(limit).offset(offset)
+    contacts = await db.execute(stmt)
+    return contacts.scalars().all()

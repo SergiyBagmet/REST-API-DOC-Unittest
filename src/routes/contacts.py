@@ -42,3 +42,17 @@ async def update_contact(body: ContactUpdateSchema, contact_id: int, db: AsyncSe
 async def delete_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     contact = await repositories_contacts.delete_contact(contact_id, db)
     return contact
+
+
+@router.get("/search/{search_text}", response_model=list[ContactResponseSchema])
+async def search_contacts(search_text: str,
+                          limit: int = Query(10, ge=10, le=500),
+                          offset: int = Query(0, ge=0),
+                          db: AsyncSession = Depends(get_db)):
+    if len(search_text) < 3:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Search text must be at least 3 characters long")
+    contacts = await repositories_contacts.search_contacts(search_text, limit, offset, db)
+    if len(contacts) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+    return contacts

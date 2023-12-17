@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 from sqlalchemy import String, Date, DateTime, func
 
