@@ -12,15 +12,15 @@ class ContactSchema(BaseModel):
 
 
 class ContactCreateSchema(ContactSchema):
-    created_at: datetime = Field(default=datetime.utcnow())
+    pass
 
 
 class ContactUpdateSchema(ContactSchema):
-    updated_at: datetime = Field(default=datetime.utcnow())
+    pass
 
 
 class ContactResponseSchema(BaseModel):
-    id: int
+    id: int = 1
     first_name: str
     last_name: str
     email: EmailStr
