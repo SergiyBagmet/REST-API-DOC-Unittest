@@ -18,7 +18,7 @@ class UserUpdateSchema(UserSchema):
 
 
 class UserResponseSchema(BaseModel):
-    id: int
+    id: int = 1
     username: str
     email: EmailStr
 

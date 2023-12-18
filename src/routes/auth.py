@@ -20,10 +20,10 @@ async def signup(body: UserCreateSchema, db: AsyncSession = Depends(get_db)):
 
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
-    return new_user
+    return {"user": new_user, "detail": "User successfully created"}
 
 
-@router.post("/login")  # TODO response_model=, status_code=status)
+@router.post("/login", response_model=TokenSchema, status_code=status.HTTP_201_CREATED)
 async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
 
     user = await repository_users.get_user_by_email(body.username, db)
