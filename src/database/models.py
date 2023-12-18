@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
-from sqlalchemy import String, Date, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
+from sqlalchemy import String, Date, DateTime, func, Integer, ForeignKey
 
 
 class Base(DeclarativeBase):
@@ -16,8 +16,12 @@ class Contact(Base):
     phone_number: Mapped[str] = mapped_column('phone_number', String(20))
     birthday: Mapped[Date] = mapped_column('birthday', Date)
 
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=True)
+    user: Mapped['User'] = relationship("User", backref="contacts", lazy='joined')
+
     created_at: Mapped[DateTime] = mapped_column('created_at', DateTime, default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column('updated_at', DateTime, default=None, onupdate=func.now())
+    updated_at: Mapped[DateTime] = mapped_column('updated_at', DateTime, default=None, onupdate=func.now(),
+                                                 nullable=True)
 
     def __repr__(self) -> str:
         return (f'Contact('
@@ -33,3 +37,22 @@ class Contact(Base):
     @property
     def full_name(self) -> str:
         return f'{self.first_name} {self.last_name}'
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column('id', primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column('username', String(50))
+    email: Mapped[str] = mapped_column('email', String(150), nullable=False, unique=True)
+    password: Mapped[str] = mapped_column('password', String(255), nullable=False)
+    refresh_token: Mapped[str] = mapped_column('refresh_token', String(255), nullable=True)
+
+    created_at: Mapped[DateTime] = mapped_column('created_at', DateTime, default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column('updated_at', DateTime, default=func.now(), onupdate=func.now())
+
+    def __repr__(self) -> str:
+        return (f'User('
+                f'id={self.id}, '
+                f'username={self.username}, '
+                f'email={self.email}')
