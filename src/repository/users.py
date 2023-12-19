@@ -1,10 +1,8 @@
-from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.db import get_db
 from src.database.models import User
-from src.schemas.users import UserCreateSchema, UserUpdateSchema, TokenSchema
+from src.schemas.users import UserCreateSchema
 
 
 async def get_user_by_email(email: str, db: AsyncSession):
@@ -21,6 +19,7 @@ async def create_user(body: UserCreateSchema, db: AsyncSession):
     return user
 
 
-async def update_token(user: User, token: str, db: AsyncSession):
+async def update_token(user: User, token: str | None, db: AsyncSession):
     user.refresh_token = token
     await db.commit()
+    await db.refresh(user)

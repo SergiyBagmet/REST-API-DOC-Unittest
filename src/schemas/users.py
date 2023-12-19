@@ -17,13 +17,19 @@ class UserUpdateSchema(UserSchema):
     pass
 
 
-class UserResponseSchema(BaseModel):
-    id: int = 1
+class UserDb(BaseModel):
+    id: int
     username: str
-    email: EmailStr
+    email: str
+    created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+
+class UserResponseSchema(BaseModel):
+    user: UserDb
+    detail: str = "User successfully created"
 
 
 class TokenSchema(BaseModel):
