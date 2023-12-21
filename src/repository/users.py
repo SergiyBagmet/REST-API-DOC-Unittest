@@ -1,3 +1,4 @@
+from libgravatar import Gravatar
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +13,13 @@ async def get_user_by_email(email: str, db: AsyncSession):
 
 
 async def create_user(body: UserCreateSchema, db: AsyncSession):
-    user = User(**body.model_dump(exclude_unset=True))
+    avatar = None
+    try:
+        g = Gravatar(body.email)
+        avatar = g.get_image()
+    except Exception as e:
+        print(e)
+    user = User(**body.model_dump(exclude_unset=True), avatar=avatar)
     db.add(user)
     await db.commit()
     await db.refresh(user)

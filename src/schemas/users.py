@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -21,6 +21,7 @@ class UserDb(BaseModel):
     id: int
     username: str
     email: str
+    avatar: str
     created_at: datetime
 
     class Config:

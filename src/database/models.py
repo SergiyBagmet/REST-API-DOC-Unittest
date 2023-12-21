@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
-from sqlalchemy import String, Date, DateTime, func, Integer, ForeignKey
+from sqlalchemy import String, Date, DateTime, func, Integer, ForeignKey, Boolean
 
 
 class Base(DeclarativeBase):
@@ -46,10 +46,13 @@ class User(Base):
     username: Mapped[str] = mapped_column('username', String(50))
     email: Mapped[str] = mapped_column('email', String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column('password', String(255), nullable=False)
+    avatar: Mapped[str] = mapped_column('avatar',String(255), nullable=True)
     refresh_token: Mapped[str] = mapped_column('refresh_token', String(255), nullable=True)
 
     created_at: Mapped[DateTime] = mapped_column('created_at', DateTime, default=func.now())
     updated_at: Mapped[DateTime] = mapped_column('updated_at', DateTime, default=func.now(), onupdate=func.now())
+
+    confirmed: Mapped[bool] = mapped_column('confirmed', Boolean, default=False, nullable=True)
 
     def __repr__(self) -> str:
         return (f'User('
