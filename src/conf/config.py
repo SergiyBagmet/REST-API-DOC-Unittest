@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     SECRET_KEY_JWT: str = "secret_key_jwt"
     ALGORITHM_JWT: str = "HS256"
 
+    MAIL_USERNAME: str = "example@meta.ua"
+    MAIL_PASSWORD: str = "secretPassword"
+    MAIL_FROM: str = "example@meta.ua"
+    MAIL_PORT: int = 465
+    MAIL_SERVER: str = "smtp.meta.ua"
+
     model_config = SettingsConfigDict(env_file='.env', extra='ignore', env_file_encoding='utf-8')
 
 
