@@ -5,20 +5,19 @@ from fastapi import Depends, HTTPException
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from jose import JWTError, jwt # noqa
+from jose import JWTError, jwt  # noqa
 from starlette import status
 
 from src.database.db import get_db
 from src.repository import users as repository_users
+from src.conf.config import config
 
 
 class Auth:
-
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    SECRET_KEY = "4c0af0ea0694d512247c2926e5aa2aaa0fe89dd57164e389c392d3d9a277ac8e"
-    # TODO: remove SECRET_KEY to environment variable
-    ALGORITHM = "HS256"
+    SECRET_KEY = config.SECRET_KEY_JWT
+    ALGORITHM = config.ALGORITHM_JWT
 
     def verify_password(self, plain_password, hashed_password):
         return self.pwd_context.verify(plain_password, hashed_password)
