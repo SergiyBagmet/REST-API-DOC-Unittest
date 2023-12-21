@@ -1,6 +1,5 @@
 import pathlib
 
-from pydantic import PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +10,7 @@ class Settings(BaseSettings):
     PG_DOMAIN: str = "localhost"
     PG_PORT: int = 5432
 
-    DB_URL: PostgresDsn = f"postgresql+asyncpg://{PG_USER}:{PG_PASSWORD}@{PG_DOMAIN}:{PG_PORT}/{PG_DB}"
+    DB_URL: str = f"postgresql+asyncpg://{PG_USER}:{PG_PASSWORD}@{PG_DOMAIN}:{PG_PORT}/{PG_DB}"
 
     SECRET_KEY_JWT: str = "secret_key_jwt"
     ALGORITHM_JWT: str = "HS256"
