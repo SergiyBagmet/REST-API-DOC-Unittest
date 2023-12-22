@@ -37,6 +37,14 @@ class RequestEmail(BaseModel):
     email: EmailStr
 
 
+class ResetPassword(BaseModel):
+    password: str = Field(min_length=6, max_length=10)
+
+
+class ResetPasswordForm(ResetPassword): # TODO не получилось применить для получения форми
+    confirm_password: str = Field(min_length=6, max_length=10)
+
+
 class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str

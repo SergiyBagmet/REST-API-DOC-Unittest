@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import User
-from src.schemas.users import UserCreateSchema
+from src.schemas.users import UserCreateSchema, ResetPassword
 
 
 async def get_user_by_email(email: str, db: AsyncSession):
@@ -35,5 +35,11 @@ async def update_token(user: User, token: str | None, db: AsyncSession):
 async def confirmed_email(email: str, db: AsyncSession) -> None:
     user = await get_user_by_email(email, db)
     user.confirmed = True
+    await db.commit()
+    await db.refresh(user)
+
+
+async def update_password(user: str, password: str, db: AsyncSession):
+    user.password = password
     await db.commit()
     await db.refresh(user)
