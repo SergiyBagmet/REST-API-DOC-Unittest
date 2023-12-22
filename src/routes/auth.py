@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.conf.config import config
 from src.database.db import get_db
 from src.repository import users as repository_users
-from src.schemas.users import UserCreateSchema, TokenSchema, UserResponseSchema
+from src.schemas.users import UserCreateSchema, TokenSchema, UserResponseSchema, RequestEmail
 from src.services.auth import auth_service
 from src.services.email import send_email
 
@@ -78,3 +78,16 @@ async def confirmed_email(token: str, db: AsyncSession = Depends(get_db)):
         return {"message": "Your email is already confirmed"}
     await repository_users.confirmed_email(email, db)
     return {"message": "Email confirmed"}
+
+
+@router.post('/request_email')
+async def request_email(body: RequestEmail, bt: BackgroundTasks, request: Request,
+                        db: AsyncSession = Depends(get_db)):
+    user = await repository_users.get_user_by_email(body.email, db)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
+    if user.confirmed:
+        return {"message": "Your email is already confirmed"}
+
+    bt.add_task(send_email, user.email, user.username, str(request.base_url))
+    return {"message": "Check your email for confirmation."}

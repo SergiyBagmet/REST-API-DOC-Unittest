@@ -33,6 +33,10 @@ class UserResponseSchema(BaseModel):
     detail: str = "User successfully created"
 
 
+class RequestEmail(BaseModel):
+    email: EmailStr
+
+
 class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str
