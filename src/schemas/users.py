@@ -42,6 +42,7 @@ class ResetPassword(BaseModel):
 
 
 class ResetPasswordForm(ResetPassword): # TODO не получилось применить для получения форми
+    # TODO new
     confirm_password: str = Field(min_length=6, max_length=10)
 
 
