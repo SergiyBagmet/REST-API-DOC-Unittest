@@ -16,10 +16,6 @@ get_refresh_token = HTTPBearer()
 templates = Jinja2Templates(directory="src/services/templates")
 
 
-
-
-
-
 @router.post("/signup", response_model=UserResponseSchema, status_code=status.HTTP_201_CREATED)
 async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, db: AsyncSession = Depends(get_db)):
     exist_user = await repository_users.get_user_by_email(body.email, db)
@@ -129,7 +125,6 @@ async def refresh_password(token: str,
                            password: str = Form(pattern="[A-Za-z0-9]{6,8}"),
                            confirm_password: str = Form(pattern="[A-Za-z0-9]{6,8}"),
                            db: AsyncSession = Depends(get_db)):
-
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
 

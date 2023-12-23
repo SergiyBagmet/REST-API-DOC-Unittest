@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     MAIL_PORT: int = 465
     MAIL_SERVER: str = "smtp.meta.ua"
 
+    REDIS_DOMAIN: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: int = 123456
+
     model_config = SettingsConfigDict(env_file='.env', extra='ignore', env_file_encoding='utf-8')
 
 
