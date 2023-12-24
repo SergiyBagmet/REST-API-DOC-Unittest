@@ -25,26 +25,30 @@ async def create_user(body: UserCreateSchema, db: AsyncSession):
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    # cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
     return user
 
 
 async def update_token(user: User, token: str | None, db: AsyncSession):
     user.refresh_token = token
     await db.commit()
-    await db.refresh(user)
+    await db.merge(user)
+    cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
 
 
 async def confirmed_email(email: str, db: AsyncSession) -> None:
     user = await get_user_by_email(email, db)
     user.confirmed = True
     await db.commit()
-    await db.refresh(user)
+    await db.merge(user)
+    cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
 
 
-async def update_password(user: str, password: str, db: AsyncSession):
+async def update_password(user: User, password: str, db: AsyncSession):
     user.password = password
     await db.commit()
-    await db.refresh(user)
+    await db.merge(user)
+    cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
 
 
 async def update_avatar(email: str, src_url: str, db: AsyncSession):

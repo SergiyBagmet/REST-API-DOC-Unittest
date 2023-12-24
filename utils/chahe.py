@@ -24,7 +24,7 @@ class RadisCache:
     def redis_cache(self, func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            key = pickle.dumps(hash_func(func.__name__, list(args)[0]))  # TODO костиль
+            key = hash_func(func.__name__, list(args)[0])  # TODO костиль
             result = self.redis.get(key)
 
             if result is None:
