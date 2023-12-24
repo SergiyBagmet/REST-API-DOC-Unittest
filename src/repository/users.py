@@ -40,7 +40,14 @@ async def confirmed_email(email: str, db: AsyncSession) -> None:
 
 
 async def update_password(user: str, password: str, db: AsyncSession):
-    # TODO new
     user.password = password
     await db.commit()
     await db.refresh(user)
+
+
+async def update_avatar(email: str, src_url: str, db: AsyncSession):
+    user = await get_user_by_email(email, db)
+    user.avatar = src_url
+    await db.commit()
+    await db.refresh(user)
+    return user

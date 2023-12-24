@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.routes import contacts, auth
+from src.routes import contacts, auth, users
 from utils import health_checker
 from utils.limiter import register_startup_event_limiter
 from utils.cors import configure_cors
@@ -12,6 +12,7 @@ configure_cors(app)
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(contacts.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
 app.include_router(health_checker.router, prefix="/api")
 
 
