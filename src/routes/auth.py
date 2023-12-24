@@ -99,7 +99,6 @@ async def request_email(body: RequestEmail, bt: BackgroundTasks, request: Reques
 
 
 @router.post('/reset_password_send_email')
-# TODO new
 async def reset_password(body: RequestEmail, bt: BackgroundTasks, request: Request,
                          db: AsyncSession = Depends(get_db)):
     user = await repository_users.get_user_by_email(body.email, db)
@@ -114,13 +113,11 @@ async def reset_password(body: RequestEmail, bt: BackgroundTasks, request: Reque
 
 
 @router.get("/reset_password/{token}", response_class=HTMLResponse, status_code=status.HTTP_200_OK)
-# TODO new
 async def refresh_password(token: str, request: Request):
     return templates.TemplateResponse("form_reset_password.html", {"request": request, "token": token})
 
 
 @router.post("/reset_password/response/{token}")
-# TODO new
 async def refresh_password(token: str,
                            password: str = Form(pattern="[A-Za-z0-9]{6,8}"),
                            confirm_password: str = Form(pattern="[A-Za-z0-9]{6,8}"),

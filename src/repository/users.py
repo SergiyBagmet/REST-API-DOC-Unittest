@@ -3,9 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import User
-from src.schemas.users import UserCreateSchema, ResetPassword
+from src.schemas.users import UserCreateSchema
+from utils.chahe import cache
 
 
+@cache.redis_cache
 async def get_user_by_email(email: str, db: AsyncSession):
     stmt = select(User).filter_by(email=email)
     user = await db.execute(stmt)
@@ -46,8 +48,9 @@ async def update_password(user: str, password: str, db: AsyncSession):
 
 
 async def update_avatar(email: str, src_url: str, db: AsyncSession):
-    user = await get_user_by_email(email, db)
+    user: User = await get_user_by_email(email, db)
     user.avatar = src_url
     await db.commit()
-    await db.refresh(user)
+    await db.merge(user)
+    cache.updated.send(sender=None, func_name="get_user_by_email", arg=email, value=user)
     return user

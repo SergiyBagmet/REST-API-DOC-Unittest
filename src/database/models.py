@@ -46,7 +46,7 @@ class User(Base):
     username: Mapped[str] = mapped_column('username', String(50))
     email: Mapped[str] = mapped_column('email', String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column('password', String(255), nullable=False)
-    avatar: Mapped[str] = mapped_column('avatar',String(255), nullable=True)
+    avatar: Mapped[str] = mapped_column('avatar', String(255), nullable=True)
     refresh_token: Mapped[str] = mapped_column('refresh_token', String(255), nullable=True)
 
     created_at: Mapped[DateTime] = mapped_column('created_at', DateTime, default=func.now())
@@ -59,3 +59,4 @@ class User(Base):
                 f'id={self.id}, '
                 f'username={self.username}, '
                 f'email={self.email}')
+
