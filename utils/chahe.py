@@ -3,13 +3,8 @@ import pickle
 from functools import wraps
 
 from redis import StrictRedis
-from blinker import signal
 
 from src.conf.config import config
-
-
-def hash_func(func_name, arg):
-    return f"{func_name}:{str(arg)}"
 
 
 class RadisCache:
@@ -19,31 +14,36 @@ class RadisCache:
         db=0
     )
 
-    updated = signal("updated")
+    async def cache_key(self, func_name, unique_arg):
+        return f"{func_name}:{str(unique_arg)}"
 
-    def redis_cache(self, func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            key = hash_func(func.__name__, list(args)[0])  # TODO костиль
-            result = self.redis.get(key)
+    def cache(self, ttl=-1):
 
-            if result is None:
-                value = await func(*args, **kwargs)
-                value_pickle = pickle.dumps(value)
-                self.redis.set(key, value_pickle)
-            else:
-                value = pickle.loads(result)
+        def decorator(func):
+            @wraps(func)
+            async def wrapper(*args, **kwargs):
+                unique_arg, *_ = args
+                key = await self.cache_key(func.__name__, unique_arg)
+                result = self.redis.get(key)
+                self.redis.expire(key, ttl)
+                if result is None:
+                    value = await func(*args, **kwargs)
+                    value_pickle = pickle.dumps(value)
+                    self.redis.set(key, value_pickle, ex=ttl)
+                else:
+                    value = pickle.loads(result)
 
-            return value
+                return value
 
-        return wrapper
+            return wrapper
 
-    @updated.connect
-    def update_cache(self, sender, func_name: str, arg, value: t.Any):
-        key = hash_func(func_name, arg)
+        return decorator
+
+    async def update_cache(self, func: t.Callable, unique_arg, value: t.Any):
+        key = await self.cache_key(func.__name__, unique_arg)
         value = pickle.dumps(value)
-        cache.redis.set(key, value)
-        print(f"cache updated")
+        ttl = self.redis.ttl(key)
+        self.redis.set(key, value, ex=ttl)
 
 
-cache = RadisCache()
+rc = RadisCache()

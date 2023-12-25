@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import User
 from src.schemas.users import UserCreateSchema
-from utils.chahe import cache
+from utils.chahe import rc
 
 
-@cache.redis_cache
+@rc.cache(ttl=500)
 async def get_user_by_email(email: str, db: AsyncSession):
     stmt = select(User).filter_by(email=email)
     user = await db.execute(stmt)
@@ -25,7 +25,7 @@ async def create_user(body: UserCreateSchema, db: AsyncSession):
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    # cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
+    # TODO add cache ?
     return user
 
 
@@ -33,7 +33,7 @@ async def update_token(user: User, token: str | None, db: AsyncSession):
     user.refresh_token = token
     await db.commit()
     await db.merge(user)
-    cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
+    await rc.update_cache(func=get_user_by_email, unique_arg=user.email, value=user)
 
 
 async def confirmed_email(email: str, db: AsyncSession) -> None:
@@ -41,14 +41,14 @@ async def confirmed_email(email: str, db: AsyncSession) -> None:
     user.confirmed = True
     await db.commit()
     await db.merge(user)
-    cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
+    await rc.update_cache(func=get_user_by_email, unique_arg=user.email, value=user)
 
 
 async def update_password(user: User, password: str, db: AsyncSession):
     user.password = password
     await db.commit()
     await db.merge(user)
-    cache.updated.send(sender=None, func_name="get_user_by_email", arg=user.email, value=user)
+    await rc.update_cache(func=get_user_by_email, unique_arg=user.email, value=user)
 
 
 async def update_avatar(email: str, src_url: str, db: AsyncSession):
@@ -56,5 +56,5 @@ async def update_avatar(email: str, src_url: str, db: AsyncSession):
     user.avatar = src_url
     await db.commit()
     await db.merge(user)
-    cache.updated.send(sender=None, func_name="get_user_by_email", arg=email, value=user)
+    await rc.update_cache(func=get_user_by_email, unique_arg=user.email, value=user)
     return user
