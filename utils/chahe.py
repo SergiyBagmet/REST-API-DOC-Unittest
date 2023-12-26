@@ -25,12 +25,12 @@ class RadisCache:
                 unique_arg, *_ = args
                 key = await self.cache_key(func.__name__, unique_arg)
                 result = self.redis.get(key)
-                self.redis.expire(key, ttl)
                 if result is None:
                     value = await func(*args, **kwargs)
                     value_pickle = pickle.dumps(value)
                     self.redis.set(key, value_pickle, ex=ttl)
                 else:
+                    self.redis.expire(key, ttl)
                     value = pickle.loads(result)
 
                 return value

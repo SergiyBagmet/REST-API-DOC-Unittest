@@ -22,6 +22,7 @@ class UserDb(BaseModel):
     username: str
     email: str
     avatar: str
+    confirmed: bool
     created_at: datetime
 
     class Config:
