@@ -7,7 +7,7 @@ from redis import StrictRedis
 from src.conf.config import config
 
 
-class RadisCache:
+class RedisCache:
     redis = StrictRedis(
         host=config.REDIS_DOMAIN,
         port=config.REDIS_PORT,
@@ -46,4 +46,4 @@ class RadisCache:
         self.redis.set(key, value, ex=ttl)
 
 
-rc = RadisCache()
+rc = RedisCache()
