@@ -8,7 +8,7 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath('...'))
+sys.path.append(os.path.abspath('../../src'))
 
 project = 'Address book'
 copyright = '2023, Sergiy Bagmet (student GoIt)'
