@@ -42,8 +42,7 @@ class ResetPassword(BaseModel):
     password: str = Field(min_length=6, max_length=10)
 
 
-class ResetPasswordForm(ResetPassword): # TODO не получилось применить для получения форми
-    # TODO new
+class ResetPasswordForm(ResetPassword):
     confirm_password: str = Field(min_length=6, max_length=10)
 
 

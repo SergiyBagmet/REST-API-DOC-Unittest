@@ -9,6 +9,15 @@ router = APIRouter(tags=['healthchecker'])
 
 @router.get("/healthchecker")
 async def healthchecker(db: AsyncSession = Depends(get_db)):
+    """
+    The healthchecker function is a simple function that checks the health of the database.
+    It does this by making a request to the database and checking if it returns any results.
+    If it doesn't, then we know something is wrong with our connection.
+
+    :param db: AsyncSession: Pass the database session to the function
+    :return: A dictionary with a message
+    :doc-author: Trelent
+    """
     try:
         # Make request
         result = await db.execute(text("SELECT 1"))
