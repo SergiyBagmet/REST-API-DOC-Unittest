@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 import cloudinary
 import cloudinary.uploader
@@ -13,7 +14,7 @@ from src.schemas.users import UserDb
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/me/", response_model=UserDb)
+@router.get("/me/", response_model=UserDb,  dependencies=[Depends(RateLimiter(times=2, seconds=5))])
 async def read_users_me(current_user: User = Depends(auth_service.get_current_user)):
     """
     The read_users_me function is a GET endpoint that returns the current user's information.

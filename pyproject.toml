@@ -28,6 +28,22 @@ cloudinary = "^1.37.0"
 [tool.poetry.group.dev.dependencies]
 sphinx = "^7.2.6"
 
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.23.2"
+httpx = "^0.26.0"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+pythonpath = [
+   "." ,"src", "main.py",
+]
+asyncio_mode = "auto"
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

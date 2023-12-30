@@ -2,12 +2,12 @@ from fastapi import FastAPI
 
 from src.routes import contacts, auth, users
 from utils import health_checker
-from utils.limiter import register_startup_event_limiter
+from utils.limiter import lifespan_limiter
 from utils.cors import configure_cors, register_user_agent_ban_middleware
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan_limiter)
 
-register_startup_event_limiter(app)
+
 configure_cors(app)
 register_user_agent_ban_middleware(app)
 

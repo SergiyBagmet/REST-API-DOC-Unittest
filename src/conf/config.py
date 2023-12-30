@@ -1,5 +1,4 @@
 import pathlib
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +10,14 @@ class Settings(BaseSettings):
     PG_PORT: int = 5432
 
     DB_URL: str = f"postgresql+asyncpg://{PG_USER}:{PG_PASSWORD}@{PG_DOMAIN}:{PG_PORT}/{PG_DB}"
+
+    PG_TEST_DB: str = "name_test_database"
+    PG_TEST_USER: str = "user_test_database"
+    PG_TEST_PASSWORD: int = 123456
+    PG_TEST_DOMAIN: str = "localhost"
+    PG_TEST_PORT: int = 5432
+
+    DB_TEST_URL: str = f"postgresql+asyncpg://{PG_TEST_USER}:{PG_TEST_PASSWORD}@{PG_TEST_DOMAIN}:{PG_TEST_PORT}/{PG_TEST_DB}"
 
     SECRET_KEY_JWT: str = "secret_key_jwt"
     ALGORITHM_JWT: str = "HS256"
@@ -29,8 +36,13 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: int = 123456
     CLOUDINARY_API_SECRET: str = "api_secret"
 
-    model_config = SettingsConfigDict(env_file='.env', extra='ignore', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_prefix="",
+        env_file_encoding="utf-8",
+        env_file=pathlib.Path(__file__).parent.parent.parent / ".env",
+        extra='ignore',
+    )
 
 
-dot_env_file = pathlib.Path(__file__).parent.parent.parent / '.env'
-config = Settings(_env_file=dot_env_file)
+config = Settings()

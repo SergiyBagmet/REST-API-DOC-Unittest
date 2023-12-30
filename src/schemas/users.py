@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class UserSchema(BaseModel):
@@ -24,9 +24,6 @@ class UserDb(BaseModel):
     avatar: str
     confirmed: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class UserResponseSchema(BaseModel):
