@@ -13,7 +13,9 @@ async def lifespan_limiter(app: FastAPI) -> None:
     It's a good place to initialize things that are needed by your app,
     such as database connections or external services.
 
-    :return: A coroutine that is executed when the application starts
+    :param app: The FastAPI application.
+    :type app: FastAPI
+    :yield: None
     :doc-Author: Trelent
     """
 
