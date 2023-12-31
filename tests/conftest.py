@@ -1,20 +1,25 @@
 import asyncio
+from unittest import mock
 
 import pytest
 import pytest_asyncio
 
 from fastapi.testclient import TestClient
+from redis import StrictRedis
 from sqlalchemy.pool import StaticPool
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from main import app
+from src.conf.config import config
 from src.database.models import Base, User
 from src.database.db import get_db
 from src.services.auth import auth_service
-from src.conf.config import config
+from utils.cache import RedisCache
+
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 engine = create_async_engine(
-    config.DB_TEST_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
 
 TestingSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
@@ -63,3 +68,31 @@ def client():
 async def get_token():
     token = await auth_service.create_access_token(data={"sub": test_user["email"]})
     return token
+
+
+@pytest.fixture(scope="session")
+def redis_test_client():
+    redis = StrictRedis(
+        host=config.REDIS_DOMAIN,
+        port=config.REDIS_PORT,
+        db=1
+    )
+    yield redis
+    redis.flushall()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_cache_decorator(monkeypatch, redis_test_client):
+    mock_cache = mock.Mock(return_value=mock.Mock())
+    monkeypatch.setattr("utils.cache.RedisCache.cache", mock_cache)  # Подмена декоратора
+    monkeypatch.setattr("utils.cache.RedisCache.redis", redis_test_client)  # Подмена клиента
+    yield mock_cache
+
+
+@pytest.fixture(scope="function")
+def update_cache(monkeypatch, redis_test_client):
+    # TODO як тут це зробити?
+    pass
+
+
+

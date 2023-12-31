@@ -5,9 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.templating import Jinja2Templates
 from starlette.responses import HTMLResponse
 
+from src.conf.config import config
+from src.conf import messages as msg
 from src.database.db import get_db
 from src.repository import users as repository_users
-from src.schemas.users import UserCreateSchema, TokenSchema, UserResponseSchema, RequestEmail
+from src.schemas.users import UserCreateSchema, TokenSchema, UserResponseSchema, RequestEmail, UserDb
 from src.services.auth import auth_service
 from src.services.email import send_email
 
@@ -16,7 +18,7 @@ get_refresh_token = HTTPBearer()
 templates = Jinja2Templates(directory="src/services/templates")
 
 
-@router.post("/signup", response_model=UserResponseSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", response_model=UserDb, status_code=status.HTTP_201_CREATED)
 async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, db: AsyncSession = Depends(get_db)):
     """
     The signup function creates a new user in the database.
@@ -33,7 +35,7 @@ async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, 
     """
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg.ACCOUNT_EXISTS)
 
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
@@ -41,7 +43,7 @@ async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, 
     bt.add_task(send_email, new_user.email, new_user.username, str(request.base_url),
                 header_msg='Email confirmation', template_name='verify_email.html')
 
-    return {"user": new_user, "detail": "User successfully created, check your email"}
+    return new_user
 
 
 @router.post("/login", response_model=TokenSchema, status_code=status.HTTP_201_CREATED)
@@ -60,7 +62,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
     if not user.confirmed:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account not confirmed. Check email")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg.ACCOUNT_NOT_CONFIRMED)
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
 
