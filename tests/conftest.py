@@ -88,8 +88,3 @@ def mock_cache_decorator(monkeypatch, redis_test_client):
     monkeypatch.setattr("utils.cache.RedisCache.redis", redis_test_client)  # Подмена клиента
     yield mock_cache
 
-
-@pytest.fixture(scope="function")
-def update_cache(monkeypatch, redis_test_client):
-    # TODO як тут це зробити?
-    pass
