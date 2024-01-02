@@ -43,7 +43,7 @@ class RedisCache:
         """
         return f"{func_name}:{str(unique_arg)}"
 
-    def cache(self, ttl=-1):
+    def cache(self, ttl=5000):
         """
         The cache function is a decorator that caches the result of a function call.
         The cache key is generated from the function name and its arguments.

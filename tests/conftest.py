@@ -66,7 +66,7 @@ def client():
 
 @pytest_asyncio.fixture()
 async def get_token():
-    token = await auth_service.create_access_token(data={"sub": test_user["email"]})
+    token = await auth_service.create_access_token(data={"sub": test_user.get("email")})
     return token
 
 
@@ -93,6 +93,3 @@ def mock_cache_decorator(monkeypatch, redis_test_client):
 def update_cache(monkeypatch, redis_test_client):
     # TODO як тут це зробити?
     pass
-
-
-

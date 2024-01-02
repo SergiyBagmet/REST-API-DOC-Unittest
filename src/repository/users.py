@@ -7,7 +7,7 @@ from src.schemas.users import UserCreateSchema
 from utils.cache import rc
 
 
-@rc.cache(ttl=999999)
+@rc.cache(ttl=3000)
 async def get_user_by_email(email: str, db: AsyncSession):
 
     """

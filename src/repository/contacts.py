@@ -79,8 +79,8 @@ async def update_contact(contact_id: int, body: ContactUpdateSchema, db: AsyncSe
     stmt = (select(Contact)
             .filter(Contact.user_id == user.id)
             .filter_by(id=contact_id))
-    contact = await db.execute(stmt)
-    contact = contact.scalar_one_or_none()
+    contact_ = await db.execute(stmt)
+    contact = contact_.scalar_one_or_none()
 
     if contact is not None:
         for field, value in body.model_dump(exclude_unset=True).items():
@@ -88,7 +88,6 @@ async def update_contact(contact_id: int, body: ContactUpdateSchema, db: AsyncSe
 
         await db.merge(contact)
         await db.commit()
-        await db.refresh(contact)
 
     return contact
 
