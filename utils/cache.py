@@ -113,6 +113,8 @@ class RedisCache:
         key = await self.cache_key(func.__name__, unique_arg)
         value = pickle.dumps(value)
         ttl = self.redis.ttl(key)
+        if ttl <= 0:
+            ttl = 5000
         self.redis.set(key, value, ex=ttl)
 
 

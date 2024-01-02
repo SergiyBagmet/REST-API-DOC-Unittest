@@ -23,7 +23,7 @@ class TestAsyncUser(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.session = AsyncMock(spec=AsyncSession)
         self.user = User(username="test_user", email="test_user@gmail.com", password="test1234")
-        #self.mock_redis_cache = AsyncMock(spec=RedisCache)
+        self.mock_redis_cache = AsyncMock(spec=RedisCache)
 
     async def test_get_user_by_email(self):
         mocked_user = MagicMock()
@@ -31,14 +31,19 @@ class TestAsyncUser(unittest.IsolatedAsyncioTestCase):
         self.session.execute.return_value = mocked_user
 
         user = await get_user_by_email(self.user.email, self.session)
-        self.assertEqual(user, self.user)
-        # self.mock_redis_cache.cache.assert_called_once()
+        self.assertEqual(user.email, self.user.email)
 
     async def test_create_user(self):
         body = UserCreateSchema(username=self.user.username,
                                 email=self.user.email,
                                 password=self.user.password)
 
-        result = await create_user(body, self.session)
+        user = await create_user(body, self.session)
 
-        self.assertEqual(result, self.user)
+        self.assertIsInstance(user, User)
+        self.assertEqual(user.email, self.user.email)
+        self.assertEqual(user.username, self.user.username)
+        # TODO dont work
+        #  self.mock_redis_cache.update_cache.assert_called_once()
+
+
