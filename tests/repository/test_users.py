@@ -5,6 +5,8 @@ from unittest.mock import MagicMock, AsyncMock, Mock, patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import utils.cache
+from tests.conftest import mock_cache
+
 from utils.cache import rc, RedisCache
 from src.database.models import Contact, User
 from src.schemas.users import UserCreateSchema, UserUpdateSchema
@@ -23,7 +25,10 @@ class TestAsyncUser(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.session = AsyncMock(spec=AsyncSession)
         self.user = User(username="test_user", email="test_user@gmail.com", password="test1234")
-        self.mock_redis_cache = AsyncMock(spec=RedisCache)
+
+    async def test_start_cache(self, mock_cache):
+        self.mock_redis_cache = mock_cache
+        self.assertIsInstance(self.mock_redis_cache, RedisCache)
 
     async def test_get_user_by_email(self):
         mocked_user = MagicMock()
@@ -47,8 +52,7 @@ class TestAsyncUser(unittest.IsolatedAsyncioTestCase):
 
         self.session.add.assert_called_once_with(user)
         self.session.commit.assert_called_once()
-        # TODO dont work
-        #  self.mock_redis_cache.update_cache.assert_called_once()
+        # self.mock_redis_cache.update_cache.assert_called_once()
 
     async def test_update_token(self):
         self.user.refresh_token = "test_token"

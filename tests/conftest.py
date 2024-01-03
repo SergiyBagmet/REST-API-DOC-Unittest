@@ -82,9 +82,9 @@ def redis_test_client():
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_cache_decorator(monkeypatch, redis_test_client):
-    mock_cache = mock.Mock(return_value=mock.Mock())
-    monkeypatch.setattr("utils.cache.RedisCache.cache", mock_cache)  # Подмена декоратора
+def mock_cache(monkeypatch, redis_test_client):
+    mock_cache_cls = mock.AsyncMock(spec=RedisCache, return_value=mock.AsyncMock())
+    monkeypatch.setattr("utils.cache.RedisCache", mock_cache_cls)  # Подмена декоратора
     monkeypatch.setattr("utils.cache.RedisCache.redis", redis_test_client)  # Подмена клиента
-    yield mock_cache
+    return mock_cache_cls
 
