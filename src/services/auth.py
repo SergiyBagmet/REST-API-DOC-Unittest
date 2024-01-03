@@ -11,6 +11,7 @@ from starlette import status
 from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import config
+from utils.cache import get_cache
 
 
 class Auth:
@@ -18,6 +19,8 @@ class Auth:
 
     SECRET_KEY = config.SECRET_KEY_JWT
     ALGORITHM = config.ALGORITHM_JWT
+
+    cache = get_cache()
 
     def verify_password(self, plain_password, hashed_password):
         return self.pwd_context.verify(plain_password, hashed_password)
@@ -78,7 +81,7 @@ class Auth:
         except JWTError as e:
             raise credentials_exception
 
-        user = await repository_users.get_user_by_email(email, db)
+        user = await repository_users.get_user_by_email(email, db, self.cache)
         if user is None:
             raise credentials_exception
         return user
