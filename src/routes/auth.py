@@ -12,6 +12,7 @@ from src.repository import users as repository_users
 from src.schemas.users import UserCreateSchema, TokenSchema, UserResponseSchema, RequestEmail, UserDb
 from src.services.auth import auth_service
 from src.services.email import send_email
+from utils.cache import get_cache
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 get_refresh_token = HTTPBearer()
@@ -19,7 +20,8 @@ templates = Jinja2Templates(directory="src/services/templates")
 
 
 @router.post("/signup", response_model=UserDb, status_code=status.HTTP_201_CREATED)
-async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, db: AsyncSession = Depends(get_db)):
+async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, db: AsyncSession = Depends(get_db),
+                 cache=Depends(get_cache)):
     """
     The signup function creates a new user in the database.
         It takes a UserCreateSchema as input, which is validated by pydantic.
@@ -33,12 +35,12 @@ async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, 
     :return: A dict with the user and a detail message
     :doc-author: Trelent
     """
-    exist_user = await repository_users.get_user_by_email(body.email, db)
+    exist_user = await repository_users.get_user_by_email(body.email, db, cache)
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg.ACCOUNT_EXISTS)
 
     body.password = auth_service.get_password_hash(body.password)
-    new_user = await repository_users.create_user(body, db)
+    new_user = await repository_users.create_user(body, db, cache)
 
     bt.add_task(send_email, new_user.email, new_user.username, str(request.base_url),
                 header_msg='Email confirmation', template_name='verify_email.html')
@@ -47,7 +49,7 @@ async def signup(body: UserCreateSchema, bt: BackgroundTasks, request: Request, 
 
 
 @router.post("/login", response_model=TokenSchema, status_code=status.HTTP_201_CREATED)
-async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db), cache=Depends(get_cache)):
     """
     The login function is used to authenticate a user.
         It takes the username and password from the request body,
@@ -55,10 +57,11 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
 
     :param body: OAuth2PasswordRequestForm: Validate the request body
     :param db: AsyncSession: Get the database session from the dependency injection container
+    :param cache: Cache: Get the cache from the dependency injection container
     :return: A token
     :doc-author: Trelent
     """
-    user = await repository_users.get_user_by_email(body.username, db)
+    user = await repository_users.get_user_by_email(body.username, db, cache)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
     if not user.confirmed:
@@ -69,7 +72,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
     # Generate JWT
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
-    await repository_users.update_token(user, refresh_token, db)
+    await repository_users.update_token(user, refresh_token, db, cache)
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -79,7 +82,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
 
 @router.get('/refresh_token', response_model=TokenSchema)
 async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(get_refresh_token),
-                        db: AsyncSession = Depends(get_db)):
+                        db: AsyncSession = Depends(get_db), cache=Depends(get_cache)):
     """
     The refresh_token function is used to refresh the access token.
     It takes in a refresh token and returns a new access token.
@@ -90,19 +93,20 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(get_
 
     :param credentials: HTTPAuthorizationCredentials: Get the credentials from the request header
     :param db: AsyncSession: Get the database session
+    :param cache: Cache: Get the cache from the dependency injection container
     :return: A new access_token and refresh_token
     :doc-author: Trelent
     """
     token = credentials.credentials
     email = await auth_service.decode_refresh_token(token)
-    user = await repository_users.get_user_by_email(email, db)
+    user = await repository_users.get_user_by_email(email, db, cache)
     if user.refresh_token != token:
-        await repository_users.update_token(user, None, db)
+        await repository_users.update_token(user, None, db, cache)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
     access_token = await auth_service.create_access_token(data={"sub": email})
     refresh_token = await auth_service.create_refresh_token(data={"sub": email})
-    await repository_users.update_token(user, refresh_token, db)
+    await repository_users.update_token(user, refresh_token, db, cache)
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -111,7 +115,7 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(get_
 
 
 @router.get('/confirmed_email/{token}')
-async def confirmed_email(token: str, db: AsyncSession = Depends(get_db)):
+async def confirmed_email(token: str, db: AsyncSession = Depends(get_db), cache=Depends(get_cache)):
     """
     The confirmed_email function is used to confirm a user's email address.
         It takes the token from the URL and uses it to get the user's email address.
@@ -120,22 +124,23 @@ async def confirmed_email(token: str, db: AsyncSession = Depends(get_db)):
 
     :param token: str: Get the token from the url
     :param db: AsyncSession: Get the database session from the dependency
+    :param cache: Cache: Get the cache from the dependency injection container
     :return: A message that the email has been confirmed
     :doc-author: Trelent
     """
     email = await auth_service.get_email_from_token(token)
-    user = await repository_users.get_user_by_email(email, db)
+    user = await repository_users.get_user_by_email(email, db, cache)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error")
     if user.confirmed:
         return {"message": "Your email is already confirmed"}
-    await repository_users.confirmed_email(email, db)
+    await repository_users.confirmed_email(email, db, cache)
     return {"message": "Email confirmed"}
 
 
 @router.post('/request_email')
 async def request_email(body: RequestEmail, bt: BackgroundTasks, request: Request,
-                        db: AsyncSession = Depends(get_db)):
+                        db: AsyncSession = Depends(get_db), cache=Depends(get_cache)):
     """
     The request_email function is used to send an email confirmation link to the user's email address.
     The function takes in a RequestEmail object, which contains the user's email address. The function then checks if
@@ -145,10 +150,11 @@ async def request_email(body: RequestEmail, bt: BackgroundTasks, request: Reques
     :param bt: BackgroundTasks: Add a task to the background tasks queue
     :param request: Request: Get the base url of the request
     :param db: AsyncSession: Get the database session
+    :param cache: Cache: Get the cache from the dependency injection container
     :return: A message
     :doc-author: Trelent
     """
-    user = await repository_users.get_user_by_email(body.email, db)
+    user = await repository_users.get_user_by_email(body.email, db, cache)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
     if user.confirmed:
@@ -161,7 +167,7 @@ async def request_email(body: RequestEmail, bt: BackgroundTasks, request: Reques
 
 @router.post('/reset_password_send_email')
 async def reset_password(body: RequestEmail, bt: BackgroundTasks, request: Request,
-                         db: AsyncSession = Depends(get_db)):
+                         db: AsyncSession = Depends(get_db), cache=Depends(get_cache)):
     """
     The reset_password function is used to reset a user's password.
         It takes in the email of the user and sends an email with a link to reset their password.
@@ -171,10 +177,11 @@ async def reset_password(body: RequestEmail, bt: BackgroundTasks, request: Reque
     :param bt: BackgroundTasks: Add a task to the background tasks queue
     :param request: Request: Get the base_url of the application
     :param db: AsyncSession: Get the database session
+    :param cache: Cache: Get the cache from the dependency injection container
     :return: A dictionary with a message
     :doc-author: Trelent
     """
-    user = await repository_users.get_user_by_email(body.email, db)
+    user = await repository_users.get_user_by_email(body.email, db, cache)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
     if not user.confirmed:
@@ -203,7 +210,8 @@ async def refresh_password(token: str, request: Request):
 async def refresh_password(token: str,
                            password: str = Form(pattern="[A-Za-z0-9]{6,8}"),
                            confirm_password: str = Form(pattern="[A-Za-z0-9]{6,8}"),
-                           db: AsyncSession = Depends(get_db)):
+                           db: AsyncSession = Depends(get_db),
+                           cache=Depends(get_cache)):
     """
     The refresh_password function is used to reset a user's password.
     It takes in the token, password and confirm_password as parameters.
@@ -214,20 +222,20 @@ async def refresh_password(token: str,
     If there are users with that email but they have not verified their account yet,
 
     :param token: str: Get the email of the user from the token
-    :param password: str: Get the new password from the user
-    :param 8}&quot;): Ensure that the password is between 6 and 8 characters long
-    :param confirm_password: str: Confirm the password
-    :param 8}&quot;): Ensure that the password is between 6 and 8 characters long
+    :param password: str: Get the password from the request
+    :param confirm_password: str: Get the confirm password from the request
     :param db: AsyncSession: Get the database session
+    :param cache: Cache: Get the cache from the dependency injection container
+
     :return: A dictionary with a message
     :doc-author: Trelent
     """
     email = await auth_service.get_email_from_token(token)
-    user = await repository_users.get_user_by_email(email, db)
+    user = await repository_users.get_user_by_email(email, db, cache)
 
     if password != confirm_password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
     password = auth_service.get_password_hash(password)
-    await repository_users.update_password(user, password, db)
+    await repository_users.update_password(user, password, db, cache)
 
     return {"message": "Password reset successful"}
